@@ -22,7 +22,7 @@ const AdminLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const success = login(adminKey);
+      const success = await login(adminKey);
       
       if (success) {
         toast.success('Login successful! Welcome to the admin dashboard.');

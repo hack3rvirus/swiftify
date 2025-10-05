@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://swiftifyy.onrender.com';
 
 // Check if backend is available
 const isBackendAvailable = async (): Promise<boolean> => {
@@ -254,6 +254,63 @@ class ApiClient {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+    });
+  }
+
+  async createOrderAdmin(data: ScheduleRequest, token: string): Promise<ApiResponse<{ trackingId: string }>> {
+    return this.request('/api/admin/orders', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteParcel(trackingId: string, token: string): Promise<ApiResponse<{ detail: string }>> {
+    return this.request(`/api/admin/parcel/${trackingId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  async getSettings(token: string): Promise<ApiResponse<{ location_address: string; live_chat_code: string; phone_number: string }>> {
+    return this.request('/api/admin/settings', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+
+  async updateSettings(data: { location_address?: string; live_chat_code?: string; phone_number?: string }, token: string): Promise<ApiResponse<any>> {
+    return this.request('/api/admin/settings', {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async sendEmail(data: { email: string; subject: string; message: string }, token: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.request('/api/admin/email', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateRoute(trackingId: string, route: any[], token: string): Promise<ApiResponse<TrackingResponse>> {
+    return this.request(`/api/admin/parcel/${trackingId}/route`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ route }),
     });
   }
 

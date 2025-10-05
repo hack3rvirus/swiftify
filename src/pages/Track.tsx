@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { MapPin, Clock, Package, CheckCircle, Truck, AlertCircle, Share2, Bell } from 'lucide-react';
-import { useTracking } from '../contexts/TrackingContext';
+import { useTracking, TrackingData } from '../contexts/TrackingContext';
 import { apiClient } from '../lib/api';
 import { generateTrackingId, isValidTrackingId } from '../lib/tracking';
 import { sendNotification } from '../lib/notifications';
@@ -35,30 +35,29 @@ const Track: React.FC = () => {
 
     setIsLoading(true);
     setTrackingError(null);
+    setTrackingData(null);
 
     try {
-      // For demo purposes, we'll create mock data if the API fails
       const response = await apiClient.trackParcel(id);
-      
+
       if (response.success && response.data) {
-        setTrackingData(response.data);
+        // Cast the API response to TrackingData type
+        const trackingData: TrackingData = {
+          ...response.data,
+          status: response.data.status as TrackingData['status']
+        };
+        setTrackingData(trackingData);
         addToSearchHistory(id);
-        simulateMovement(response.data);
+        simulateMovement(trackingData);
+        toast.success('Tracking data loaded successfully');
       } else {
-        // Create demo data for testing
-        const demoData = createDemoTrackingData(id);
-        setTrackingData(demoData);
-        addToSearchHistory(id);
-        simulateMovement(demoData);
-        toast.success('Tracking data loaded (Demo Mode)');
+        setTrackingError('Tracking ID not found. Please check your tracking number and try again.');
+        toast.error('Tracking ID not found');
       }
     } catch (error) {
-      // Fallback to demo data
-      const demoData = createDemoTrackingData(id);
-      setTrackingData(demoData);
-      addToSearchHistory(id);
-      simulateMovement(demoData);
-      toast.success('Tracking data loaded (Demo Mode)');
+      console.error('Tracking error:', error);
+      setTrackingError('Unable to load tracking data. Please try again later.');
+      toast.error('Failed to load tracking data');
     } finally {
       setIsLoading(false);
     }

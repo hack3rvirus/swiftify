@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Truck, Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import logo from '../../assets/images/logo.png';
 
 const Footer: React.FC = () => {
   return (
@@ -10,13 +11,12 @@ const Footer: React.FC = () => {
           {/* Brand Section */}
           <div className="col-span-1 lg:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <div className="p-2 bg-blue-600 rounded-lg">
-                <Truck className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <span className="text-2xl font-bold">Swiftify</span>
-                <div className="text-sm text-gray-400">Speed Meets Intelligence in Every Delivery</div>
-              </div>
+              <img
+                src={logo}
+                alt="Swiftify Logo"
+                className="h-8 w-8 object-contain"
+              />
+              <span className="text-2xl font-bold">Swiftify</span>
             </div>
             <p className="text-gray-400 mb-6 max-w-md">
               Revolutionizing logistics with cutting-edge technology. Track your parcels in real-time,

@@ -29,8 +29,8 @@ FastAPI backend for the Swiftify logistics and parcel tracking platform.
    ```
 
 4. **Access API Documentation**
-   - Swagger UI: http://localhost:8000/docs
-   - ReDoc: http://localhost:8000/redoc
+   - Swagger UI: https://swiftifyy.onrender.com/docs
+   - ReDoc: https://swiftifyy.onrender.com/redoc
 
 ## API Endpoints
 

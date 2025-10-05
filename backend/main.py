@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 import smtplib
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import requests
 import asyncio
 import json
@@ -29,7 +29,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Add your frontend URLs
+    allow_origins=["https://swiftifydel.netlify.app/", "http://localhost:5173", "http://127.0.0.1:5173"],  # Add your frontend URLs and localhost for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -143,11 +143,11 @@ def send_email_notification(to_email: str, subject: str, body: str) -> bool:
         if not all([smtp_host, smtp_user, smtp_password]):
             return False
             
-        msg = MimeMultipart()
+        msg = MIMEMultipart()
         msg['From'] = smtp_user
         msg['To'] = to_email
         msg['Subject'] = subject
-        msg.attach(MimeText(body, 'html'))
+        msg.attach(MIMEText(body, 'html'))
         
         server = smtplib.SMTP(smtp_host, smtp_port)
         server.starttls()
@@ -350,7 +350,7 @@ async def schedule_delivery(request: ScheduleRequest):
             <p><strong>From:</strong> {request.sender.name}</p>
             <p><strong>To:</strong> {request.receiver.name}</p>
             <p><strong>Estimated Cost:</strong> ${estimated_cost}</p>
-            <p>Track your package at: <a href="https://swiftify.com/track?id={tracking_id}">Track Now</a></p>
+            <p>Track your package at: <a href="https://swiftifydel.netlify.app/track?id={tracking_id}">Track Now</a></p>
             """
             send_email_notification(request.sender.email, email_subject, email_body)
         
@@ -361,6 +361,123 @@ async def schedule_delivery(request: ScheduleRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to schedule delivery: {str(e)}"
         )
+
+# New admin-only endpoints
+
+from fastapi import Request
+
+@app.post("/api/admin/orders")
+async def admin_create_order(request: Request, payload: dict = Depends(verify_jwt_token)):
+    """Admin creates a new order"""
+    if not payload.get("admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    data = await request.json()
+    try:
+        schedule_request = ScheduleRequest(**data)
+        tracking_id = generate_tracking_id()
+        route = create_demo_route(schedule_request.sender.address, schedule_request.receiver.address)
+        base_cost = 15.0
+        weight_multiplier = {
+            "<1kg": 1.0,
+            "1-5kg": 1.2,
+            "5-10kg": 1.5,
+            "10-20kg": 2.0,
+            "20kg+": 2.5
+        }
+        estimated_cost = base_cost * weight_multiplier.get(schedule_request.parcelDetails.weight, 1.0)
+        parcel = {
+            "id": tracking_id,
+            "sender": schedule_request.sender.dict(),
+            "receiver": schedule_request.receiver.dict(),
+            "parcelDetails": schedule_request.parcelDetails.dict(),
+            "status": "pending",
+            "mode": "auto",
+            "history": [
+                {
+                    "status": "Package scheduled",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "location": schedule_request.sender.address.split(",")[0],
+                    "notes": "Package scheduled for pickup"
+                }
+            ],
+            "route": [point.dict() for point in route],
+            "currentPosition": route[0].dict() if route else None,
+            "eta": (datetime.utcnow() + timedelta(days=2)).isoformat(),
+            "createdAt": datetime.utcnow().isoformat(),
+            "estimatedCost": round(estimated_cost, 2),
+            "progress": 0
+        }
+        parcels_db[tracking_id] = parcel
+        await save_to_database("parcels", parcel)
+        return {"trackingId": tracking_id}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid data: {str(e)}")
+
+@app.delete("/api/admin/parcel/{tracking_id}")
+async def admin_delete_parcel(tracking_id: str, payload: dict = Depends(verify_jwt_token)):
+    """Admin deletes a parcel"""
+    if not payload.get("admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    if tracking_id in parcels_db:
+        del parcels_db[tracking_id]
+        # Also delete from supabase if applicable
+        if supabase:
+            try:
+                supabase.table("parcels").delete().eq("id", tracking_id).execute()
+            except Exception as e:
+                print(f"Failed to delete parcel from database: {e}")
+        return {"detail": "Parcel deleted"}
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parcel not found")
+
+# Settings storage (in-memory for now)
+settings_store = {
+    "location_address": "",
+    "live_chat_code": "",
+    "phone_number": ""
+}
+
+@app.get("/api/admin/settings")
+async def get_settings(payload: dict = Depends(verify_jwt_token)):
+    if not payload.get("admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return settings_store
+
+@app.put("/api/admin/settings")
+async def update_settings(data: dict, payload: dict = Depends(verify_jwt_token)):
+    if not payload.get("admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    for key in ["location_address", "live_chat_code", "phone_number"]:
+        if key in data:
+            settings_store[key] = data[key]
+    return settings_store
+
+@app.post("/api/admin/email")
+async def send_custom_email(data: dict, payload: dict = Depends(verify_jwt_token)):
+    if not payload.get("admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    to_email = data.get("email")
+    subject = data.get("subject")
+    message = data.get("message")
+    if not to_email or not subject or not message:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing email, subject or message")
+    success = send_email_notification(to_email, subject, message)
+    return {"success": success}
+
+@app.patch("/api/admin/parcel/{tracking_id}/route")
+async def update_delivery_route(tracking_id: str, data: dict, payload: dict = Depends(verify_jwt_token)):
+    if not payload.get("admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    parcel = await get_from_database("parcels", tracking_id)
+    if not parcel:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parcel not found")
+    # Expect data to contain route list
+    route = data.get("route")
+    if not route or not isinstance(route, list):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid route data")
+    parcel["route"] = route
+    await save_to_database("parcels", parcel)
+    return parcel
 
 @app.get("/api/track/{tracking_id}")
 async def track_parcel(tracking_id: str):

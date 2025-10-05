@@ -13,7 +13,7 @@ export interface ParcelDetails {
   photo?: string;
 }
 
-export interface TrackingData {
+export type TrackingData = {
   id: string;
   sender: {
     name: string;

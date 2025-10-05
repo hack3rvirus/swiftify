@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Truck, Menu, X, Search, Sun, Moon } from 'lucide-react';
+import { Menu, X, Search, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTracking } from '../../contexts/TrackingContext';
 import SearchModal from '../UI/SearchModal';
+import logo from '../../assets/images/logo.png';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,7 +36,7 @@ const Navbar: React.FC = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2 group">
               <img
-                src="/logo.png"
+                src={logo}
                 alt="Swiftify Logo"
                 className="h-8 w-8 object-contain"
               />

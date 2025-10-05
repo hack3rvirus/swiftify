@@ -80,9 +80,9 @@ python main.py
 ```
 
 ### 4. Access Application
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:8000
-- **API Documentation:** http://localhost:8000/docs
+- **Frontend:** https://swiftifydel.netlify.app/
+- **Backend API:** https://swiftifyy.onrender.com
+- **API Documentation:** https://swiftifyy.onrender.com/docs
 
 ## 🔧 Configuration
 
@@ -94,7 +94,7 @@ python main.py
 VITE_SUPABASE_URL=your_supabase_url_here
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_BASE_URL=https://swiftifyy.onrender.com
 
 # Feature Flags
 VITE_ENABLE_GOOGLE_MAPS=false
@@ -164,7 +164,7 @@ ENABLE_GOOGLE_MAPS=false
 
 ### Admin Access
 - **Admin Key:** `SwiftifyAdmin2025!ComplexSecureKey#$%789XYZLogistics`
-- **Dashboard:** http://localhost:5173/admin/login
+- **Dashboard:** https://swiftifydel.netlify.app/admin/login
 
 ## 🚀 Production Deployment
 

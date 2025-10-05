@@ -1,13 +1,24 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { TrackingData } from './TrackingContext';
+import { apiClient } from '../lib/api';
+import toast from 'react-hot-toast';
 
 interface AdminContextType {
   isAuthenticated: boolean;
-  login: (key: string) => boolean;
+  login: (key: string) => Promise<boolean>;
   logout: () => void;
   parcels: TrackingData[];
-  setParcels: (parcels: TrackingData[]) => void;
-  updateParcel: (id: string, updates: Partial<TrackingData>) => void;
+  refreshParcels: () => Promise<void>;
+  updateParcel: (id: string, updates: Partial<TrackingData>) => Promise<void>;
+  deleteParcel: (id: string) => Promise<void>;
+  createOrder: (data: any) => Promise<string | null>;
+  settings: {
+    location_address: string;
+    live_chat_code: string;
+    phone_number: string;
+  };
+  updateSettings: (updates: Partial<{ location_address: string; live_chat_code: string; phone_number: string }>) => Promise<void>;
+  sendEmail: (data: { email: string; subject: string; message: string }) => Promise<boolean>;
   stats: {
     totalParcels: number;
     delivered: number;
@@ -15,6 +26,7 @@ interface AdminContextType {
     pending: number;
     onTimeDelivery: number;
   };
+  token: string | null;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -30,11 +42,20 @@ export const useAdmin = (): AdminContextType => {
 export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [parcels, setParcels] = useState<TrackingData[]>([]);
+  const [settings, setSettings] = useState({
+    location_address: '',
+    live_chat_code: '',
+    phone_number: ''
+  });
+  const [token, setToken] = useState<string | null>(null);
 
-  const login = (key: string): boolean => {
-    // Demo admin key - in production this would be properly secured
-    if (key === 'SwiftifyAdmin2025!ComplexSecureKey#$%789XYZLogistics') {
+  const login = async (key: string): Promise<boolean> => {
+    const response = await apiClient.adminLogin(key);
+    if (response.success && response.data) {
+      setToken(response.data.token);
       setIsAuthenticated(true);
+      await refreshParcels();
+      await loadSettings();
       return true;
     }
     return false;
@@ -42,12 +63,83 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const logout = () => {
     setIsAuthenticated(false);
+    setToken(null);
+    setParcels([]);
+    setSettings({ location_address: '', live_chat_code: '', phone_number: '' });
   };
 
-  const updateParcel = (id: string, updates: Partial<TrackingData>) => {
-    setParcels(prev => prev.map(parcel => 
-      parcel.id === id ? { ...parcel, ...updates } : parcel
-    ));
+  const refreshParcels = async () => {
+    if (!token) return;
+    const response = await apiClient.getAllParcels(token);
+    if (response.success && response.data) {
+      setParcels(response.data);
+    }
+  };
+
+  const updateParcel = async (id: string, updates: Partial<TrackingData>) => {
+    if (!token) return;
+    const response = await apiClient.updateParcel(id, updates, token);
+    if (response.success) {
+      await refreshParcels();
+      toast.success('Parcel updated successfully');
+    } else {
+      toast.error('Failed to update parcel');
+    }
+  };
+
+  const deleteParcel = async (id: string) => {
+    if (!token) return;
+    const response = await apiClient.deleteParcel(id, token);
+    if (response.success) {
+      await refreshParcels();
+      toast.success('Parcel deleted successfully');
+    } else {
+      toast.error('Failed to delete parcel');
+    }
+  };
+
+  const createOrder = async (data: any): Promise<string | null> => {
+    if (!token) return null;
+    const response = await apiClient.createOrderAdmin(data, token);
+    if (response.success && response.data) {
+      await refreshParcels();
+      toast.success('Order created successfully');
+      return response.data.trackingId;
+    } else {
+      toast.error('Failed to create order');
+      return null;
+    }
+  };
+
+  const loadSettings = async () => {
+    if (!token) return;
+    const response = await apiClient.getSettings(token);
+    if (response.success && response.data) {
+      setSettings(response.data);
+    }
+  };
+
+  const updateSettings = async (updates: Partial<{ location_address: string; live_chat_code: string; phone_number: string }>) => {
+    if (!token) return;
+    const response = await apiClient.updateSettings(updates, token);
+    if (response.success) {
+      setSettings(prev => ({ ...prev, ...updates }));
+      toast.success('Settings updated successfully');
+    } else {
+      toast.error('Failed to update settings');
+    }
+  };
+
+  const sendEmail = async (data: { email: string; subject: string; message: string }): Promise<boolean> => {
+    if (!token) return false;
+    const response = await apiClient.sendEmail(data, token);
+    if (response.success && response.data?.success) {
+      toast.success('Email sent successfully');
+      return true;
+    } else {
+      toast.error('Failed to send email');
+      return false;
+    }
   };
 
   const stats = {
@@ -65,9 +157,15 @@ export const AdminProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         login,
         logout,
         parcels,
-        setParcels,
+        refreshParcels,
         updateParcel,
+        deleteParcel,
+        createOrder,
+        settings,
+        updateSettings,
+        sendEmail,
         stats,
+        token,
       }}
     >
       {children}
