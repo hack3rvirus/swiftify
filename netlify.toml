@@ -1,6 +1,6 @@
 [build]
-  # Build command for frontend only
-  command = "npm run build"
+  # Use custom build script to avoid Python detection
+  command = "./build.sh"
   # Directory to publish (built frontend)
   publish = "dist"
 
