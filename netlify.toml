@@ -1,0 +1,33 @@
+[build]
+  # Build command for frontend only
+  command = "npm run build"
+  # Directory to publish (built frontend)
+  publish = "dist"
+
+[build.environment]
+  # Skip Python installation since we're only building frontend
+  PYTHON_VERSION = "none"
+
+# Ignore backend files for build
+[build.processing]
+  skip_processing = false
+[build.processing.css]
+  bundle = true
+  minify = true
+[build.processing.js]
+  bundle = true
+  minify = true
+[build.processing.html]
+  pretty_urls = true
+
+# Redirect API calls to production backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://swiftifyy.onrender.com/api/:splat"
+  status = 200
+
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
