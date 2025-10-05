@@ -3,8 +3,6 @@
   command = "npm run build"
   # Directory to publish (built frontend)
   publish = "dist"
-  # Ignore Python files completely
-  ignore = "git diff --quiet HEAD^ HEAD -- backend/ runtime.txt pyproject.toml"
 
 [build.environment]
   # Explicitly disable Python
