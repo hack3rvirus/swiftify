@@ -1,7 +1,7 @@
 [build]
   # Use custom build script to avoid Python detection
   base = "."
-  command = "./build.sh"
+  command = "bash ./build.sh"
   # Directory to publish (built frontend)
   publish = "frontend/dist"
 
