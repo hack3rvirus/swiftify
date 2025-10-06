@@ -5,6 +5,8 @@
 
 echo "Starting custom frontend build..."
 
+cd frontend
+
 # Install Node.js dependencies
 npm install
 

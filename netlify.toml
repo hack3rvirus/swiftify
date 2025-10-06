@@ -1,8 +1,8 @@
 [build]
   # Use custom build script to avoid Python detection
-  command = "./build.sh"
+  command = "./frontend/build.sh"
   # Directory to publish (built frontend)
-  publish = "dist"
+  publish = "frontend/dist"
 
 [build.environment]
   # Explicitly disable Python
