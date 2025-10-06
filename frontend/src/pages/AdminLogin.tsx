@@ -67,7 +67,7 @@ const AdminLogin: React.FC = () => {
                 <input
                   type={showKey ? 'text' : 'password'}
                   value={adminKey}
-                  onChange={(e) => setAdminKey(e.target.value)}
+                  onChange={(e) => setAdminKey(e.target.value.trim())}
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="Enter admin key"
                   required

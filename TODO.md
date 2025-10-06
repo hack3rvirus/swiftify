@@ -22,3 +22,15 @@
 - [ ] Update vite.config.ts if needed
 - [ ] Test local build
 - [ ] Verify Netlify deployment
+
+# Admin Login Fix
+
+## Steps to Complete
+- [x] Analyze admin login issue
+- [x] Identify potential causes: extra spaces in key, quotes in env var
+- [x] Modify backend to strip key and add debug print
+- [x] Modify frontend to trim key on input
+- [ ] Commit and push changes to trigger redeploy on Render and Netlify
+- [ ] Test admin login after redeploy
+- [ ] If still fails, check Render logs for debug output to compare hashes
+- [ ] If hashes don't match, verify the ADMIN_KEY value in Render dashboard (ensure no quotes)
