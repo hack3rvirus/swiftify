@@ -5,8 +5,7 @@
   publish = "frontend/dist"
 
 [build.environment]
-  # Explicitly disable Python
-  PYTHON_VERSION = "none"
+  # Node.js version for frontend build
   NODE_VERSION = "18"
 
 # Ignore backend files for build
